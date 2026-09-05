@@ -360,8 +360,7 @@ function translateAllyabaseProtocol(url) {
     'fount': '3006',
     'dolores': '3007',
     'minnie': '2525',
-    'aretha': '7277',
-    'covenant': '3011'
+    'aretha': '7277'
   };
 
   // Extract service name from URL (e.g., allyabase://sanora/path -> sanora)
@@ -601,5 +600,12 @@ console.warn(err);
 // Initialize magic gateway
 setupMagicGateway();
 
-app.listen(3003);
-console.log('give me your bdo');
+// Only bind a port when this file is run directly (`node bdo.js`), e.g. on the
+// droplet. When imported by a Netlify Function (netlify/functions/bdo.js),
+// serverless-http drives the same Express `app` per-invocation instead.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(3003);
+  console.log('give me your bdo');
+}
+
+export default app;

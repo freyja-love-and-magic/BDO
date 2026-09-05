@@ -1,0 +1,13 @@
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# BDO's Express app owns its own routing (see bdo.js) - forward everything to
+# the one function that wraps it with serverless-http, instead of mapping
+# each route to its own Netlify Function.
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/bdo/:splat"
+  status = 200
