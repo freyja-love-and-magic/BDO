@@ -421,27 +421,49 @@ console.warn(err);
   }
 });
 
-app.delete('/user/delete', async (req, res) => {
+// Deletes a user's BDO and everything derived from it.
+//
+// Registered at /user/:uuid/delete, which is what every client already calls
+// (bdo-rs builds `{base}user/{uuid}/delete`). It was previously registered at
+// /user/delete with no uuid segment, so the route simply never matched and
+// delete_user 404'd from every Rust client.
+//
+// The handler also never deleted anything — it ran the continuebee auth check
+// and returned. And because it assigned `res.status = 403` instead of calling
+// `res.status(403)`, a failed auth came back as HTTP 200 with an error body,
+// which any status-checking client would read as success. Both fixed here.
+//
+// `pubKey` is optional and only needed for a public BDO, to reach the public
+// record and the emojicode/shortcode mappings. It is verified, not trusted:
+// the caller must prove possession of the matching private key, or anyone
+// could pass someone else's pubKey and unpublish their card.
+app.delete('/user/:uuid/delete', async (req, res) => {
   try {
+    const uuid = req.params.uuid;
     const body = req.body;
     const timestamp = body.timestamp;
-    const uuid = body.uuid;
     const hash = body.hash;
     const signature = body.signature;
+    const pubKey = body.pubKey;
 
     const resp = await fetch(`${continuebeeURL}user/${uuid}?timestamp=${timestamp}&hash=${hash}&signature=${signature}`);
-console.log(resp.status);
     if(resp.status !== 200) {
-      res.status = 403;
-      return res.send({error: 'Auth error'});
+      return res.status(403).send({error: 'Auth error'});
     }
 
-    res.status = 202;
-    return res.send();
+    // The continuebee check above proves the caller controls this uuid. This
+    // second check proves they also control the pubKey whose public record
+    // and codes they're asking us to remove. bdo-rs signs `timestamp + uuid`.
+    if(pubKey && !sessionless.verifySignature(signature, timestamp + uuid, pubKey)) {
+      return res.status(403).send({error: 'pubKey does not match signature'});
+    }
+
+    await bdo.deleteBDO(uuid, hash, pubKey);
+
+    return res.status(200).send({success: true});
   } catch(err) {
 console.warn(err);
-    res.status(404);
-    return res.send({error: 'not found'});
+    return res.status(404).send({error: 'not found'});
   }
 });
 

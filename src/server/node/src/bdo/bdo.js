@@ -36,8 +36,12 @@ const bdo = {
     return resp;
   },
 
-  deleteBDO: async (uuid, hash) => {
-    return (await db.deleteBDO(uuid, hash));
+  // pubKey must be forwarded: db.deleteBDO uses it to remove the public
+  // record and the emojicode/shortcode mappings. Dropping it here would let
+  // the route think it deleted a public BDO while the publicly-readable copy
+  // survived.
+  deleteBDO: async (uuid, hash, pubKey) => {
+    return (await db.deleteBDO(uuid, hash, pubKey));
   }
 };
 

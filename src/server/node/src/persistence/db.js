@@ -91,8 +91,43 @@ console.error(`Failed to generate emoji shortcode for pubKey ${pubKey}:`, error)
     return spellbooks;
   },
 
-  deleteBDO: async (uuid, hash) => {
-    const resp = await client.del(`bdo:${uuid}_${hash}`);
+  // Removes every artifact putBDO creates, not just the hash-keyed record.
+  //
+  // A public BDO is written under FOUR key families, and deleting only the
+  // first leaves the record fully readable through the public path — which is
+  // the one savage and every share link actually use. Deleting the hash key
+  // alone therefore looks like deletion while changing nothing observable:
+  //
+  //   bdo:<uuid>_<hash>          the hash-keyed record
+  //   bdo:<pubKey>               the public record         (pubKey only)
+  //   emojicode:{pubkey,code,created}:*                    (pubKey only)
+  //   shortcode:{pubkey,code}:*                            (pubKey only)
+  //
+  // pubKey is optional so private BDOs (which never wrote the other three)
+  // keep working with a two-argument call.
+  deleteBDO: async (uuid, hash, pubKey) => {
+    await client.del(`bdo:${uuid}_${hash}`);
+
+    if(!pubKey) {
+      return true;
+    }
+
+    await client.del(`bdo:${pubKey}`);
+
+    // Look the codes up before deleting the mappings that resolve them —
+    // the reverse keys are the only way back from pubKey to code.
+    const emojicode = await client.get(`emojicode:code:${pubKey}`);
+    if(emojicode) {
+      await client.del(`emojicode:pubkey:${emojicode}`);
+      await client.del(`emojicode:created:${emojicode}`);
+      await client.del(`emojicode:code:${pubKey}`);
+    }
+
+    const shortCode = await client.get(`shortcode:code:${pubKey}`);
+    if(shortCode) {
+      await client.del(`shortcode:pubkey:${shortCode}`);
+      await client.del(`shortcode:code:${pubKey}`);
+    }
 
     return true;
   },

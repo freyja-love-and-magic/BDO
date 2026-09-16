@@ -229,6 +229,14 @@ dbg!("{}", &self.sessionless.public_key().to_hex());
         Ok(spellbooks)
     }
 
+    /// Deletes a BDO and everything derived from it.
+    ///
+    /// pubKey is sent so the server can also remove the *public* record
+    /// (`bdo:<pubKey>`) and the emojicode/shortcode mappings. Without it the
+    /// server can only reach the hash-keyed copy, and a public BDO stays
+    /// readable through the public path — which is the one share links use.
+    /// The server verifies this pubKey against the signature rather than
+    /// trusting it, so sending it grants no extra authority.
     pub async fn delete_user(&self, uuid: &str, hash: &str) -> Result<SuccessResult, Box<dyn std::error::Error>> {
         let timestamp = Self::get_timestamp();
         let message = format!("{}{}", timestamp, uuid);
@@ -238,7 +246,8 @@ dbg!("{}", &self.sessionless.public_key().to_hex());
           "timestamp": timestamp,
           "uuid": uuid,
           "hash": hash,
-          "signature": signature
+          "signature": signature,
+          "pubKey": self.sessionless.public_key().to_hex()
         }).as_object().unwrap().clone();
 
         let url = format!("{}user/{}/delete", self.base_url, uuid);
