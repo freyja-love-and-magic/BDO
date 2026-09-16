@@ -452,9 +452,10 @@ app.delete('/user/:uuid/delete', async (req, res) => {
     }
 
     // The continuebee check above proves the caller controls this uuid. This
-    // second check proves they also control the pubKey whose public record
-    // and codes they're asking us to remove. bdo-rs signs `timestamp + uuid`.
-    if(pubKey && !sessionless.verifySignature(signature, timestamp + uuid, pubKey)) {
+    // second check proves they also control the pubKey whose public record and
+    // codes they're asking us to remove. Same message continuebee verifies:
+    // timestamp + uuid + hash.
+    if(pubKey && !sessionless.verifySignature(signature, timestamp + uuid + hash, pubKey)) {
       return res.status(403).send({error: 'pubKey does not match signature'});
     }
 

@@ -239,7 +239,11 @@ dbg!("{}", &self.sessionless.public_key().to_hex());
     /// trusting it, so sending it grants no extra authority.
     pub async fn delete_user(&self, uuid: &str, hash: &str) -> Result<SuccessResult, Box<dyn std::error::Error>> {
         let timestamp = Self::get_timestamp();
-        let message = format!("{}{}", timestamp, uuid);
+        // timestamp + uuid + hash, matching update_bdo/get_bdo and, crucially,
+        // what continuebee's GET /user/:uuid verifies. This previously signed
+        // timestamp + uuid only, so the auth check rejected it every time —
+        // delete_user could not have worked even with a correct route.
+        let message = format!("{}{}{}", timestamp, uuid, hash);
         let signature = self.sessionless.sign(&message).to_hex();
 
         let payload = json!({
