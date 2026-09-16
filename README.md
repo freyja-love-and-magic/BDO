@@ -434,12 +434,12 @@ This is a bit dependent on what the server implementations are, so we'll fill th
 
 To add to this repo, feel free to make a [pull request][pr].
 
-[pr]: https://github.com/planet-nine-app/bdo/pulls
-[sessionless]: https://www.github.com/planet-nine-app/sessionless
-[bdo]: https://www.github.com/planet-nine-app/BDO
-[magic]: https://www.github.com/planet-nine-app/MAGIC
-[teleportation]: https://www.github.com/planet-nine-app/teleportation
-[allyabase]: https://www.github.com/planet-nine-app/allyabase
+[pr]: https://github.com/freyja-love-and-magic/bdo/pulls
+[sessionless]: https://www.github.com/freyja-love-and-magic/sessionless
+[bdo]: https://www.github.com/freyja-love-and-magic/BDO
+[magic]: https://www.github.com/freyja-love-and-magic/MAGIC
+[teleportation]: https://www.github.com/freyja-love-and-magic/teleportation
+[allyabase]: https://www.github.com/freyja-love-and-magic/allyabase
 
 [^1]: The kind of standard use case for this is config for a client application, and that's a fine use case.
 But I thought it would be interesting to leave it more open ended, and have the BDOs map to public keys, and see what people come up with.
